@@ -229,13 +229,12 @@ const $=id=>document.getElementById(id);
 
 let recs=[];
 try{recs=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){recs=[]}
-if(!recs.length){
-  const t=new Date(),d=n=>new Date(t.getTime()-n*864e5).toISOString().slice(0,10);
-  recs=[
-    {id:1,date:d(0),payer:"k",amount:6400,cat:"宿泊代",memo:"宿（例）",sk:3200,sm:3200},
-    {id:2,date:d(0),payer:"m",amount:4800,cat:"ガソリン代",memo:"給油（例）",sk:2400,sm:2400},
-    {id:3,date:d(0),payer:"k",amount:3100,cat:"食事代",memo:"昼ごはん（例）",sk:1800,sm:1300}
-  ];
+const SEED=[{"id": "1789138729062-mop1z", "date": "2026-08-18", "payer": "k", "amount": 45688, "cat": "交通費", "memo": "JAL", "sk": 22844, "sm": 22844}, {"id": "1789139747960-8x349", "date": "2026-09-11", "payer": "k", "amount": 19800, "cat": "交通費", "memo": "", "sk": 9900, "sm": 9900}, {"id": "1789140058478-vozka", "date": "2026-09-11", "payer": "k", "amount": 4400, "cat": "入場料", "memo": "福井恐竜博物館", "sk": 2200, "sm": 2200}, {"id": "1789140127170-grnjm", "date": "2026-09-11", "payer": "k", "amount": 2600, "cat": "入場料", "memo": "福井恐竜博物館", "sk": 1300, "sm": 1300}];
+if(!localStorage.getItem('tabi-seed-1')){
+  const have=new Set(recs.map(r=>String(r.id)));
+  SEED.forEach(r=>{if(!have.has(String(r.id)))recs.push(r)});
+  try{localStorage.setItem('tabi-seed-1','1')}catch(e){}
+  try{localStorage.setItem(KEY,JSON.stringify(recs))}catch(e){}
 }
 
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(recs))}catch(e){
