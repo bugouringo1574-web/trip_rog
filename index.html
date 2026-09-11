@@ -118,6 +118,14 @@ dialog{border:0;border-radius:16px;padding:0;background:transparent;max-width:92
 dialog img{max-width:100%;border-radius:16px;display:block}
 dialog::backdrop{background:rgba(0,0,0,.72)}
 .note{font-size:11.5px;color:var(--muted);text-align:center}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;
+  display:flex;flex-direction:column;gap:12px;width:min(92vw,460px);box-shadow:var(--shadow)}
+.sheet h2{font-family:"Zen Maru Gothic",sans-serif;font-size:17px;margin:0}
+.hint{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
+#codeBox{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+  border-radius:12px;padding:10px;font-family:"JetBrains Mono",monospace;font-size:12px;resize:vertical}
+.sheet-btns{display:flex;gap:8px;justify-content:flex-end}
+.btn.primary.sm{width:auto;font-size:14px;padding:10px 18px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -189,13 +197,28 @@ dialog::backdrop{background:rgba(0,0,0,.72)}
   <div id="list"></div>
 
   <div class="tools">
+    <button class="btn" id="send">記録を渡す</button>
+    <button class="btn" id="recv">記録をもらう</button>
     <button class="btn" id="export">CSVで書き出す</button>
     <button class="btn" id="clearAll">全部消す</button>
   </div>
-  <p class="note">記録はこのスマホの中だけに保存されます。</p>
+  <p class="note">記録はこのスマホの中だけに保存されます。<br>2人で合わせるときは「記録を渡す／もらう」を使ってください。</p>
 </div>
 
 <dialog id="viewer"><img id="viewerImg" alt="レシート"></dialog>
+
+<dialog id="codeDlg">
+  <form method="dialog" class="sheet">
+    <h2 id="codeTitle"></h2>
+    <p id="codeHelp" class="hint"></p>
+    <textarea id="codeBox" rows="5" spellcheck="false"></textarea>
+    <div class="sheet-btns">
+      <button class="btn" value="cancel">閉じる</button>
+      <button class="btn primary sm" id="codeAction" type="button"></button>
+    </div>
+    <p id="codeMsg" class="hint"></p>
+  </form>
+</dialog>
 
 <script>
 const CATS=["食事代","ガソリン代","交通費","宿泊代","入場料","その他"];
@@ -272,7 +295,7 @@ $("form").addEventListener("submit",e=>{
     sk=Math.round(Number($("shareK").value)||0); sm=Math.round(Number($("shareM").value)||0);
     if(sk+sm!==amount){alert("内訳の合計が金額と合いません（"+yen(sk+sm)+" / "+yen(amount)+"）。");return}
   }
-  recs.push({id:Date.now(),date:$("date").value||new Date().toISOString().slice(0,10),
+  recs.push({id:Date.now()+"-"+Math.random().toString(36).slice(2,7),date:$("date").value||new Date().toISOString().slice(0,10),
     payer:document.querySelector('input[name="payer"]:checked').value,
     amount,cat:document.querySelector('input[name="cat"]:checked').value,
     memo:$("memo").value.trim(),sk,sm,photo:photoData||undefined});
@@ -285,8 +308,8 @@ $("form").addEventListener("submit",e=>{
 
 $("list").addEventListener("click",e=>{
   const del=e.target.closest(".del");
-  if(del){const id=Number(del.dataset.id);
-    if(confirm("この記録を消しますか？")){recs=recs.filter(r=>r.id!==id);save();render()} return;}
+  if(del){const id=del.dataset.id;
+    if(confirm("この記録を消しますか？")){recs=recs.filter(r=>String(r.id)!==id);save();render()} return;}
   const th=e.target.closest(".thumb");
   if(th&&th.dataset.full){$("viewerImg").src=th.dataset.full;$("viewer").showModal()}
 });
@@ -303,6 +326,51 @@ $("export").addEventListener("click",()=>{
   $("export").textContent="コピーしました";
   navigator.clipboard?.writeText(csv).catch(()=>{});
   setTimeout(()=>$("export").textContent="CSVで書き出す",1800);
+});
+
+// ---- 受け渡しコード（写真は含めない） ----
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.trim().replace(/\s+/g,"")))));
+let codeMode="send";
+function openCode(mode){
+  codeMode=mode;
+  const box=$("codeBox"),msg=$("codeMsg");
+  msg.textContent="";
+  if(mode==="send"){
+    $("codeTitle").textContent="記録を渡す";
+    $("codeHelp").textContent="下のコードをコピーして、LINEなどで相手に送ってください。（レシート写真は含まれません）";
+    box.value="WARIKAN1:"+enc(recs.map(({photo,...r})=>r));
+    $("codeAction").textContent="コピー";
+  }else{
+    $("codeTitle").textContent="記録をもらう";
+    $("codeHelp").textContent="受け取ったコードを貼り付けて「取り込む」。同じ記録は重複せず、足りない分だけ増えます。";
+    box.value="";
+    $("codeAction").textContent="取り込む";
+  }
+  $("codeDlg").showModal();
+  if(mode==="send"){box.focus();box.select()}
+}
+$("send").addEventListener("click",()=>openCode("send"));
+$("recv").addEventListener("click",()=>openCode("recv"));
+$("codeAction").addEventListener("click",()=>{
+  const box=$("codeBox"),msg=$("codeMsg");
+  if(codeMode==="send"){
+    box.select(); box.setSelectionRange(0,box.value.length);
+    const done=()=>{msg.textContent="コピーしました。LINEなどで送ってください。"};
+    if(navigator.clipboard){navigator.clipboard.writeText(box.value).then(done).catch(()=>{try{document.execCommand("copy");done()}catch(e){msg.textContent="長押しして「コピー」を選んでください。"}})}
+    else{try{document.execCommand("copy");done()}catch(e){msg.textContent="長押しして「コピー」を選んでください。"}}
+    return;
+  }
+  let data;
+  const raw=box.value.trim().replace(/^WARIKAN1:/,"");
+  try{data=dec(raw)}catch(e){msg.textContent="コードが読み取れません。全部コピーできているか確認してください。";return}
+  if(!Array.isArray(data)){msg.textContent="コードが読み取れません。";return}
+  const have=new Set(recs.map(r=>r.id));
+  let add=0;
+  data.forEach(r=>{if(r&&r.id&&!have.has(r.id)){recs.push(r);have.add(r.id);add++}});
+  save(); render();
+  msg.textContent=add?add+"件を取り込みました。":"新しい記録はありませんでした。";
+  box.value="";
 });
 
 function render(){
