@@ -331,6 +331,20 @@ $("export").addEventListener("click",()=>{
 // ---- 受け渡しコード（写真は含めない） ----
 const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o))));
 const dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.trim().replace(/\s+/g,"")))));
+function merge(text){
+  let raw=String(text||"");
+  if(raw.indexOf("#d=")>=0) raw=raw.split("#d=").pop();
+  else if(raw.indexOf("WARIKAN1:")>=0) raw=raw.split("WARIKAN1:").pop();
+  raw=raw.replace(/[^A-Za-z0-9+/=]/g,"");
+  if(!raw) return null;
+  let data; try{data=dec(raw)}catch(e){return null}
+  if(!Array.isArray(data)) return null;
+  const have=new Set(recs.map(r=>String(r.id)));
+  let add=0;
+  data.forEach(r=>{if(r&&r.id!=null&&!have.has(String(r.id))){recs.push(r);have.add(String(r.id));add++}});
+  save(); render();
+  return add;
+}
 let codeMode="send";
 function openCode(mode){
   codeMode=mode;
@@ -338,12 +352,13 @@ function openCode(mode){
   msg.textContent="";
   if(mode==="send"){
     $("codeTitle").textContent="記録を渡す";
-    $("codeHelp").textContent="下のコードをコピーして、LINEなどで相手に送ってください。（レシート写真は含まれません）";
-    box.value="WARIKAN1:"+enc(recs.map(({photo,...r})=>r));
+    $("codeHelp").textContent="下のリンクをコピーして、LINEなどで相手に送ってください。相手はタップするだけで取り込めます。（レシート写真は含まれません）";
+    const payload=enc(recs.map(({photo,...r})=>r));
+    box.value=location.origin+location.pathname+"#d="+payload;
     $("codeAction").textContent="コピー";
   }else{
     $("codeTitle").textContent="記録をもらう";
-    $("codeHelp").textContent="受け取ったコードを貼り付けて「取り込む」。同じ記録は重複せず、足りない分だけ増えます。";
+    $("codeHelp").textContent="受け取ったリンクかコードを貼り付けて「取り込む」。同じ記録は重複せず、足りない分だけ増えます。";
     box.value="";
     $("codeAction").textContent="取り込む";
   }
@@ -362,14 +377,8 @@ $("codeAction").addEventListener("click",()=>{
     else{try{document.execCommand("copy");done()}catch(e){msg.textContent="長押しして「コピー」を選んでください。"}}
     return;
   }
-  let data;
-  const raw=box.value.split("WARIKAN1:").pop().replace(/[^A-Za-z0-9+/=]/g,"");
-  try{data=dec(raw)}catch(e){msg.textContent="コードが読み取れません。全部コピーできているか確認してください。";return}
-  if(!Array.isArray(data)){msg.textContent="コードが読み取れません。";return}
-  const have=new Set(recs.map(r=>r.id));
-  let add=0;
-  data.forEach(r=>{if(r&&r.id&&!have.has(r.id)){recs.push(r);have.add(r.id);add++}});
-  save(); render();
+  const add=merge(box.value);
+  if(add===null){msg.textContent="読み取れません。リンクかコードを最初から最後まで貼り付けてください。";return}
   box.value="";
   $("codeDlg").hidden=true;
   window.scrollTo(0,0);
@@ -418,6 +427,16 @@ function render(){
   });
 }
 render();
+
+// リンク経由の取り込み
+if(location.hash&&location.hash.indexOf("#d=")===0){
+  const added=merge(location.hash);
+  history.replaceState(null,"",location.pathname);
+  setTimeout(()=>{
+    alert(added===null?"リンクが読み取れませんでした。":
+      (added?added+"件を取り込みました。":"新しい記録はありませんでした（すでに全部持っています）。"));
+  },200);
+}
 </script>
 
 </body>
