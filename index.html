@@ -1,30 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#00318f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="割り勘ノート">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>旅の割り勘ノート</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 :root{
-  --bg:#eef1ee; --surface:#ffffff; --surface-2:#f7f9f7;
-  --ink:#17231f; --muted:#5f6f68; --line:#d9e1dc;
-  --pine:#0f6b5c; --pine-soft:#e3f0ec;
-  --amber:#c1701a; --amber-soft:#f8ece0;
-  --shadow:0 1px 2px rgba(23,35,31,.06),0 6px 20px rgba(23,35,31,.06);
+  --bg:#eef1f6; --surface:#ffffff; --surface-2:#f5f7fb;
+  --ink:#111a2e; --muted:#5c6880; --line:#d6dde9;
+  --pine:#00318f; --pine-soft:#e2e8f6;
+  --amber:#0d7ec4; --amber-soft:#e0f0fa;
+  --shadow:0 1px 2px rgba(17,26,46,.06),0 6px 20px rgba(17,26,46,.07);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#101715; --surface:#18211e; --surface-2:#1e2825;
-    --ink:#e9efec; --muted:#93a49d; --line:#2c3936;
-    --pine:#4fc0a8; --pine-soft:#17332e;
-    --amber:#e4a15c; --amber-soft:#33261a;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+    --bg:#0b1020; --surface:#141c31; --surface-2:#1b2440;
+    --ink:#e7ecf6; --muted:#95a1bd; --line:#2a3556;
+    --pine:#7ba1ee; --pine-soft:#1a2649;
+    --amber:#4fb8e8; --amber-soft:#122c3d;
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 8px 24px rgba(0,0,0,.35);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#101715; --surface:#18211e; --surface-2:#1e2825;
-  --ink:#e9efec; --muted:#93a49d; --line:#2c3936;
-  --pine:#4fc0a8; --pine-soft:#17332e;
-  --amber:#e4a15c; --amber-soft:#33261a;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  --bg:#0b1020; --surface:#141c31; --surface-2:#1b2440;
+  --ink:#e7ecf6; --muted:#95a1bd; --line:#2a3556;
+  --pine:#7ba1ee; --pine-soft:#1a2649;
+  --amber:#4fb8e8; --amber-soft:#122c3d;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 8px 24px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
@@ -337,3 +348,6 @@ function render(){
 }
 render();
 </script>
+
+</body>
+</html>
